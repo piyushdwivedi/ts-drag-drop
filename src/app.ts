@@ -7,7 +7,7 @@ interface Validated {
     max?: number;
 }
 
-function validateInput(inputToValidate: Validated) {
+function validateInput(inputToValidate: Validated) : boolean {
     let isValid = true;
     const {value, required, minLength, maxLength, min, max} = inputToValidate;
     if (required)
@@ -23,7 +23,7 @@ function validateInput(inputToValidate: Validated) {
         isValid = isValid && value.length < maxLength;
     if (max != null && typeof value === 'number') 
         isValid = isValid && value < max;
-    
+    return isValid;
 
 }
 // autobind decorator
@@ -67,12 +67,34 @@ class ProjectInput {
         this.wrapperEle.insertAdjacentElement('afterbegin', this.element);
     }
 
-    private getUserInput() : [string, string, number] {
+    // would return a tuple for valid input and void for invalid
+    private getUserInput() : [string, string, number] | void {
         const title = this.titleEle.value;
         const description = this.descriptionEle.value;
         const peopleCount = this.peopleEle.value;
 
-        return [title, description, +peopleCount];
+        const titleValidated: Validated = {
+            value: title,
+            required: true
+        };
+        const descValidated: Validated = {
+            value: description,
+            minLength: 5
+        };
+        const peopleCountValidated: Validated = {
+            value: +peopleCount,
+            min: 1,
+            max: 5
+        };
+        if (!validateInput(titleValidated) || 
+            !validateInput(descValidated) ||
+            !validateInput(peopleCountValidated)) {
+                alert('Invalid input entered');
+                return;
+        } else {
+            return [title, description, +peopleCount];
+        }
+        
     }
     @autoBind
     private handlSubmit(event: Event) {
