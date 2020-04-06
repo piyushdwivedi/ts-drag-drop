@@ -1,3 +1,54 @@
+enum ProjectStatus { Active, Finished}
+// Custom Type - Project
+class Project {
+    constructor(
+        public id: string, 
+        public title: string, 
+        public description: string, 
+        public people: number,
+        public status: ProjectStatus) {
+
+        }
+}
+
+type Listener = (items: Project[]) => void;
+// class for global state
+class GlobalState {
+    private listeners: Listener[] = [];
+    private projects: Project[] = [];
+    private static instance: GlobalState;
+    private constructor() {
+
+    }
+    
+    static getInstance() {
+        if (this.instance) 
+            return this.instance;
+        this.instance = new GlobalState();
+        return this.instance;
+    }
+
+    addProject(title: string, description: string, numberOfPeople: number) {
+        const prjObj = new Project(
+            Math.floor(Math.random()*numberOfPeople).toString(),
+            title,
+            description,
+            numberOfPeople,
+            ProjectStatus.Active
+        )
+        this.projects.push(prjObj);
+        for (const listenerFn of this.listeners) {
+            listenerFn([...this.projects]);
+        }
+    }
+
+    addListener(listenerFn: Listener) {
+        this.listeners.push(listenerFn);
+    }
+
+}
+const globalState = GlobalState.getInstance();
+
 interface Validated {
     value: string | number;
     required?: boolean;
@@ -39,6 +90,59 @@ function autoBind(_: any, _2: String, descriptor: PropertyDescriptor) {
     return modifiedMethod;
 }
 
+// ProjectList class:
+// render list of projects
+class ProjectList {
+    templateEle: HTMLTemplateElement;
+    wrapperEle: HTMLDivElement;
+    element: HTMLElement;
+    assignedProjects: Project[];
+
+    constructor(private type: 'active' | 'finished') {
+        this.templateEle = document.getElementById('project-list') as HTMLTemplateElement;
+        this.wrapperEle = document.getElementById('app') as HTMLDivElement;
+        this.assignedProjects = [];
+        const templateNode = document.importNode(this.templateEle.content, true);
+        this.element = templateNode.firstElementChild as HTMLElement;
+        
+        this.element.id = `${this.type}-projects`;
+
+        globalState.addListener((projects: Project[]) => {
+            const validProjects = projects.filter(project => {
+                if (this.type === 'active') 
+                    return project.status === ProjectStatus.Active;
+                return project.status === ProjectStatus.Finished;
+            })
+            this.assignedProjects = validProjects;
+            this.renderProjects();
+        })
+        this.append();
+        this.addContent();
+    }
+
+    private renderProjects() {
+        const listEle = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
+        listEle.innerHTML = ''; // not ok for a large app --> performance
+        for (const prjItem of this.assignedProjects) {
+            const listItem = document.createElement('li');
+            listItem.textContent = prjItem.title;
+            listEle.appendChild(listItem);
+        }
+    }
+    private append() {
+        this.wrapperEle.insertAdjacentElement('beforeend', this.element);
+    }
+
+    private addContent() {
+        const listId = `${this.type}-project-list`;
+        // add ! because we know the element is in the html
+        this.element.querySelector('ul')!.id = listId;
+        this.element.querySelector('h2')!.textContent = `${this.type.toUpperCase()} Projects`;
+    }
+}
+
+// ProjectInput class: 
+// Renders the form and validates form inputs
 class ProjectInput {
     templateEle: HTMLTemplateElement;
     wrapperEle: HTMLDivElement;
@@ -103,6 +207,7 @@ class ProjectInput {
         if (Array.isArray(userInput)) {
             const [title, description, count] = userInput;
             console.log(title, description, count);
+            globalState.addProject(title, description, count);
             this.clearInput();
         }
     }
@@ -117,3 +222,5 @@ class ProjectInput {
     }
 }
 const projectInputInstance = new ProjectInput();
+const activeProject = new ProjectList('active');
+const finishedProject = new ProjectList('finished');
