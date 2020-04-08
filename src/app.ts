@@ -1,3 +1,14 @@
+interface Draggable {
+    dragStartHandler(event: DragEvent): void;
+    dragEndHandler(event: DragEvent): void;
+}
+
+interface DragTarget {
+    dragOverHandler(event: DragEvent): void;
+    dropHandler(event: DragEvent): void;
+    dragLeaveHandler(event: DragEvent): void;
+}
+
 enum ProjectStatus { Active, Finished}
 // Custom Type - Project
 class Project {
@@ -69,14 +80,14 @@ function validateInput(inputToValidate: Validated) : boolean {
 
     // compared with != null because minLength could be 0
     if (minLength != null && typeof value === 'string') 
-        isValid = isValid && value.length > minLength;
+        isValid = isValid && value.length >= minLength;
     if (min != null && typeof value === 'number') 
-        isValid = isValid && value > min;
+        isValid = isValid && value >= min;
 
     if (maxLength != null && typeof value === 'string') 
-        isValid = isValid && value.length < maxLength;
+        isValid = isValid && value.length <= maxLength;
     if (max != null && typeof value === 'number') 
-        isValid = isValid && value < max;
+        isValid = isValid && value <= max;
     return isValid;
 
 }
@@ -154,13 +165,50 @@ class ProjectList extends ParentComponent<HTMLDivElement, HTMLElement> {
         const listEle = document.getElementById(`${this.type}-project-list`)! as HTMLUListElement;
         listEle.innerHTML = ''; // not ok for a large app --> performance
         for (const prjItem of this.assignedProjects) {
-            const listItem = document.createElement('li');
-            listItem.textContent = prjItem.title;
-            listEle.appendChild(listItem);
+            new ProjectItem(this.element.querySelector('ul')!.id, prjItem);
         }
     }
 }
 
+// ProjectItem class
+class ProjectItem extends ParentComponent<HTMLUListElement, HTMLLIElement> 
+        implements Draggable {
+    private project: Project;
+    get personnel() {
+        const peopleCount = this.project.people;
+        if (peopleCount === 1) 
+            return '1 person';
+        else 
+            return `${peopleCount} people`;
+    }
+    constructor(hostId: string, project: Project) {
+        super('single-project', hostId, false, project.id);
+        this.project = project;
+
+        this.configure();
+        this.addContent();
+    }
+    
+    configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler);
+        this.element.addEventListener('dragend', this.dragEndHandler);
+    }
+
+    addContent() {
+        this.element.querySelector('h2')!.textContent = this.project.title;
+        this.element.querySelector('h3')!.textContent = this.personnel + ' working on this';
+        this.element.querySelector('p')!.textContent = this.project.description;
+    }
+    
+    @autoBind
+    dragStartHandler(event: DragEvent) {
+        console.log(event);
+    }
+    
+    dragEndHandler(_: DragEvent) {
+        console.log('drag ended');
+    }
+}
 // ProjectInput class: 
 // Renders the form and validates form inputs
 class ProjectInput extends ParentComponent<HTMLDivElement, HTMLFormElement> {
