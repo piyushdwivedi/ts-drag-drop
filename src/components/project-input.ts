@@ -1,8 +1,8 @@
 
-import {ParentComponent} from '../components/base-component.js';
-import {Validated, validateInput} from '../utils/validation.js';
-import {autoBind} from '../decorators/autobind.js';
-import {globalState} from '../state/global.js';
+import {ParentComponent} from '../components/base-component';
+import {Validated, validateInput} from '../utils/validation';
+import {autoBind} from '../decorators/autobind';
+import {globalState} from '../state/global';
 // ProjectInput class: 
 // Renders the form and validates form inputs
 export class ProjectInput extends ParentComponent<HTMLDivElement, HTMLFormElement> {

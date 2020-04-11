@@ -1,9 +1,9 @@
-import {ParentComponent} from '../components/base-component.js';
-import {Project, ProjectStatus} from '../models/project.js';
-import {DragTarget} from '../models/drag-drop-interface.js';
-import {globalState} from '../state/global.js';
-import {autoBind} from '../decorators/autobind.js';
-import {ProjectItem} from './project-item.js';
+import {ParentComponent} from '../components/base-component';
+import {Project, ProjectStatus} from '../models/project';
+import {DragTarget} from '../models/drag-drop-interface';
+import {globalState} from '../state/global';
+import {autoBind} from '../decorators/autobind';
+import {ProjectItem} from './project-item';
 
 // ProjectList class:
 // render list of projects
